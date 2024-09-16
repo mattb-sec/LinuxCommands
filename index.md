@@ -149,4 +149,102 @@ I will begin by setting a new password for the GRUB. My CentOS has grub2 install
   <img width="780" height="680" src="assets/fig10.png">
 </p>
 
+## Enabling the Password for a Booting Entry
+
+Before my new password can affect one of the booting entries, I must first make some changes to its parameters. To do so, I use vim to open the “grub.cfg” file under /boot/grub2. I then use the keyword “menuentry” to search for the line specified in the directions. Then, using vim’s edit mode, I remove the “—unrestricted” parameter. I then save my changes and exit. It should be noted that I have changed the parameters for the rescue operating system instead of the CentOS I tampered with earlier.
+
+- _Figure 11_: The GRUB configuration file. Highlighted is the keyword I used to find my destination. Notice how the “—unrestricted” parameter is not present.
+
+<p align="center">
+  <img width="780" height="680" src="assets/fig11.png">
+</p>
+
+## Discussion 1
+
+If the “—unrestricted” parameter was not removed from the first entry, and I can log on to the OS through the second entry, I do not believe that I can change the root user’s password for the OS on the first entry. At first, I thought it could since vim can modify the parameters of both entries so long as it has access to the configuration file. However, after attempting it myself, I was not able to successfully change the password for the original CentOS entry. Therefore, I conclude that each operating system has its own root user that is totally independent.
+
+## Discussion 2
+
+Making the GRUB password creates a password that protects access to a booting entry. That is, this action sets the password any physical user will need if he or she wishes to edit an operating system menu entry in the GRUB. However, this in itself is not effective since whether a menu entry uses a password is dependent upon its configuration. This is where removing the “—unrestricted” parameter comes in. In doing so, GRUB will not allow a menu item to be edited without a password.
+
+## Discussion 3
+
+I suspect that the bootloader can still be bypassed if the settings within the computer’s BIOS are tampered with. Given the hierarchy of the booting process, it only follows that the only other way to interrupt it is to access the BIOS and modify permissions from there. My only suggestion here is that there also be a password placed on the BIOS settings.
+
+# Enabling Security-Enhanced Linux
+
+In this brief part, I will be enabling SELinux, or Security-Enhanced Linux, on my CentOS. For clarification, SELinux “is a security architecture for Linux systems that allows administrators to have more control over who can access the system” (Red Hat).
+
+## Ensuring that SELinux is Enabled
+
+All I needed to do here was enter “cat /etc/selinux/config” to check the SELinux configuration. The state of SELinux was already set to “enforcing,” so no further action was needed on my part. From there, I enter “sestatus” to check if SELinux is currently running on enforcing mode. As the screenshot below indicates, it is.
+
+- _Figure 12_: The configuration and status of SELinux. Notice how “enforcing” is enabled in the configuration, and the current mode in status is set to “enforcing.”
+
+<p align="center">
+  <img width="780" height="680" src="assets/fig12.png">
+</p>
+
+# Enable iptables Firewall
+
+In this final part, I will simply be installing and enabling iptables to replace the default firewall interface, “firewalld.” Then, I will disable iptables and switch back to firewalld.
+
+## Swapping firewalld for iptables
+
+First, after ensuring that I am a root user, I install iptables by using yum again and entering “yum install iptables-services”. After some data installs and a prompt is answered, the installation is successful. Next, I will need to disable firewalld with the command “systemctl disable firewalld”. The command “systemctl” controls the systemd system and service manager (Man7). After that, I enter “systemctl stop firewalld”. At this point, firewalld is deactivated.
+
+The next step is to enable and start iptables. This is almost the inverse of the previous step. The commands used are “systemctl enable iptables” then “systemctl start iptables”. Then, the command “iptables -L” is used to view the default iptables firewall rules. Finally, I type “systemctl status iptables” to ensure that iptables is running.
+
+- _Figure 13_: The rules and status of iptables. It appears the firewall rules for iptables are fairly lenient. Additionally, the status shows that iptables is active as is indicated by the green “activated” text.
+
+<p align="center">
+  <img width="780" height="680" src="assets/fig13.png">
+</p>
+
+Now, to undo this process, it is once again the inverse. The command flow is as follows: systemctl disable iptables => systemctl stop iptables => systemctl enable firewalld => systemctl start firewalld. Finally, I enter “systemctl status firewalld” and “systemctl status iptables” to show the two firewall’s statuses.
+
+- _Figure 14_: The statuses of firewalld and iptables. This time, the green “active” status is under firewalld. Whereas the “Active” field under iptables is reporting the program as inactive or dead.
+
+<p align="center">
+  <img width="780" height="680" src="assets/fig14.png">
+</p>
+
+## Discussion
+
+The “disable” command disables the ongoing process by removing the symlinks (files that support the program) (Man7). Although this prevents the program from continuing to function, it does not necessarily shut it down. On the other hand, the “stop” command totally deactivates the unit specified on the command line.
+
+# Conclusion
+
+This marathon of a lab served as an excellent source of application for Linux commands in addition to addressing a significant security threat. This is also the greatest amount of insight I have gained regarding a Unix-based operating system and learned a great deal about how to handle it. Although the operating system is quite dated, and CentOS has presently ceased getting support, I still feel that the concepts learned in this lab are still applicable to computers today.
+
+# References
+
+- <a href="https://www.redhat.com/sysadmin/managing-users-passwd" target="_blank" rel="noopener noreferrer">
+  Amoany, Evans. "Managing Linux Users with the Passwd Command." Enable Sysadmin. January 01, 2021.
+</a>
+
+- <a href="https://www.ionos.com/digitalguide/server/configuration/what-is-a-bootloader/" target="_blank" rel="noopener noreferrer">
+  "Bootloader: What You Need to Know about the System Boot Manager." IONOS Digitalguide. Accessed September 27, 2021.
+</a>
+
+- <a href="https://www.geeksforgeeks.org/chroot-command-in-linux-with-examples/" target="_blank" rel="noopener noreferrer">
+  "Chroot Command in Linux with Examples." GeeksforGeeks. May 15, 2019.
+</a>
+
+- <a href="https://www.gnu.org/software/grub/" target="_blank" rel="noopener noreferrer">
+  Dubbs, Bruce. "GNU GRUB." GNU GRUB - GNU Project - Free Software Foundation (FSF). Accessed September 27, 2021.
+</a>
+
+- <a href="http://www.linfo.org/single_user_mode.html" target="_blank" rel="noopener noreferrer">
+  "Single User Mode Definition." Single User Mode Definition by The Linux Information Project (LINFO). Accessed September 27, 2021.
+</a>
+
+- <a href="https://www.man7.org/linux/man-pages/man1/systemctl.1.html" target="_blank" rel="noopener noreferrer">
+  Systemctl(1) - Linux Manual Page. Accessed September 27, 2021.
+</a>
+
+- <a href="https://www.redhat.com/en/topics/linux/what-is-selinux" target="_blank" rel="noopener noreferrer">
+  "What Is SELinux?" Red Hat - We Make Open Source Technologies for the Enterprise. Accessed September 27, 2021.
+</a>
+
 
